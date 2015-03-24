@@ -141,6 +141,12 @@ if test "$have_altivec" = "yes"; then
 fi
 AM_CONDITIONAL(HAVE_ALTIVEC, test "$have_altivec" = "yes")
 
+AC_ARG_ENABLE(vsx, [AC_HELP_STRING([--enable-vsx],[enable IBM VSX optimizations])], have_vsx=$enableval, have_vsx=no)
+if test "$have_vsx" = "yes"; then
+        AC_DEFINE(HAVE_VSX,1,[Define to enable IBM VSX optimizations.])
+fi
+AM_CONDITIONAL(HAVE_VSX, test "$have_vsx" = "yes")
+
 AC_ARG_ENABLE(neon, [AC_HELP_STRING([--enable-neon],[enable ARM NEON optimizations])], have_neon=$enableval, have_neon=no)
 if test "$have_neon" = "yes"; then
 	AC_DEFINE(HAVE_NEON,1,[Define to enable ARM NEON optimizations.])
@@ -285,6 +291,12 @@ case "${ax_cv_c_compiler_vendor}" in
 			[AC_MSG_ERROR([Need a version of gcc with -maltivec])])])])
 	fi
 
+        # VSX
+        if test "$have_vsx" = "yes" -a "x$VSX_CFLAGS" = x; then
+            AX_CHECK_COMPILER_FLAGS(-mvsx, [VSX_CFLAGS="-mvsx"],
+                [AC_MSG_ERROR([Need a version of gcc with -mvsx])])
+        fi
+
 	if test "$have_neon" = "yes" -a "x$NEON_CFLAGS" = x; then
 	    AX_CHECK_COMPILER_FLAGS(-mfpu=neon, [NEON_CFLAGS="-mfpu=neon"],
 		[AC_MSG_ERROR([Need a version of gcc with -mfpu=neon])])
@@ -304,11 +316,30 @@ case "${ax_cv_c_compiler_vendor}" in
 	dnl 		])])
 	dnl fi
 	;;
+
+    clang)
+        if test "$have_vsx" = "yes" -a "x$VSX_CFLAGS" = x; then
+            # clang appears to need both -mvsx and -maltivec for VSX
+            AX_CHECK_COMPILER_FLAGS(-maltivec, [VSX_CFLAGS="-maltivec"],
+                [AC_MSG_ERROR([Need a version of gcc with -maltivec])])
+            AX_CHECK_COMPILER_FLAGS(-mvsx, [VSX_CFLAGS="-mvsx $VSX_CFLAGS"],
+                [AC_MSG_ERROR([Need a version of gcc with -mvsx])])
+        fi
+        ;;
+
+    ibm)
+        if test "$have_vsx" = "yes" -a "x$VSX_CFLAGS" = x; then
+            # Note that IBM xlC uses -qaltivec for VSX too.
+            AX_CHECK_COMPILER_FLAGS(-qaltivec, [VSX_CFLAGS="-qaltivec"],
+                [AC_MSG_ERROR([Need a version of gcc with -qaltivec])])
+        fi
+        ;;
 esac
 
 AC_SUBST(SSE2_CFLAGS)
 AC_SUBST(AVX_CFLAGS)
 AC_SUBST(ALTIVEC_CFLAGS)
+AC_SUBST(VSX_CFLAGS)
 AC_SUBST(NEON_CFLAGS)
 
 dnl add stack alignment CFLAGS if so requested
@@ -330,11 +361,11 @@ dnl c_asm.h: Header file for enabling asm() on Digital Unix
 dnl intrinsics.h: cray unicos
 dnl sys/sysctl.h: MacOS X altivec detection
 
-dnl altivec.h requires $ALTIVEC_CFLAGS
+dnl altivec.h requires $ALTIVEC_CFLAGS (we use this for VSX too, which uses the same header)
 save_CFLAGS="$CFLAGS"
 save_CPPFLAGS="$CPPFLAGS"
-CFLAGS="$CFLAGS $ALTIVEC_CFLAGS"
-CPPFLAGS="$CPPFLAGS $ALTIVEC_CFLAGS"
+CFLAGS="$CFLAGS $ALTIVEC_CFLAGS $VSX_CFLAGS"
+CPPFLAGS="$CPPFLAGS $ALTIVEC_CFLAGS $VSX_CFLAGS"
 AC_CHECK_HEADERS([altivec.h])
 CFLAGS="$save_CFLAGS"
 CPPFLAGS="$save_CPPFLAGS"
@@ -577,6 +608,7 @@ AC_CONFIG_FILES([
    dft/simd/sse2/Makefile
    dft/simd/avx/Makefile
    dft/simd/altivec/Makefile
+   dft/simd/vsx/Makefile
    dft/simd/neon/Makefile
 
    rdft/Makefile
@@ -589,6 +621,7 @@ AC_CONFIG_FILES([
    rdft/simd/sse2/Makefile
    rdft/simd/avx/Makefile
    rdft/simd/altivec/Makefile
+   rdft/simd/vsx/Makefile
    rdft/simd/neon/Makefile
 
    reodft/Makefile
