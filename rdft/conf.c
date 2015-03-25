@@ -69,6 +69,13 @@ void X(rdft_conf_standard)(planner *p)
           X(solvtab_exec)(X(solvtab_rdft_avx_128), p);
      }
 #endif
+#if HAVE_AVX2
+     if (X(have_simd_avx2)())
+     {
+	 X(solvtab_exec)(X(solvtab_rdft_avx2), p);
+         X(solvtab_exec)(X(solvtab_rdft_avx2_128), p);
+     }
+#endif
 #if HAVE_ALTIVEC
      if (X(have_simd_altivec)())
 	  X(solvtab_exec)(X(solvtab_rdft_altivec), p);

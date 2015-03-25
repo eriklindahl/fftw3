@@ -132,6 +132,15 @@ if test "$have_avx" = "yes"; then
 fi
 AM_CONDITIONAL(HAVE_AVX, test "$have_avx" = "yes")
 
+AC_ARG_ENABLE(avx2, [AC_HELP_STRING([--enable-avx2],[enable AVX2 optimizations])], have_avx2=$enableval, have_avx2=no)
+if test "$have_avx2" = "yes"; then
+        AC_DEFINE(HAVE_AVX2,1,[Define to enable AVX2 optimizations.])
+        if test "$PRECISION" != "d" -a "$PRECISION" != "s"; then
+                AC_MSG_ERROR([AVX2 requires single or double precision])
+        fi
+fi
+AM_CONDITIONAL(HAVE_AVX2, test "$have_avx2" = "yes")
+
 AC_ARG_ENABLE(altivec, [AC_HELP_STRING([--enable-altivec],[enable Altivec optimizations])], have_altivec=$enableval, have_altivec=no)
 if test "$have_altivec" = "yes"; then
 	AC_DEFINE(HAVE_ALTIVEC,1,[Define to enable Altivec optimizations.])
@@ -281,6 +290,12 @@ case "${ax_cv_c_compiler_vendor}" in
 		[AC_MSG_ERROR([Need a version of gcc with -mavx])])
 	fi
 
+        # AVX2
+        if test "$have_avx2" = "yes" -a "x$AVX2_CFLAGS" = x; then
+            AX_CHECK_COMPILER_FLAGS(-march=core-avx2, [AVX2_CFLAGS="-march=core-avx2"],
+		[AC_MSG_ERROR([Need a version of gcc with -mavx2 or -march=core-avx2])])
+        fi
+
 	if test "$have_altivec" = "yes" -a "x$ALTIVEC_CFLAGS" = x; then
 	    # -DFAKE__VEC__ is a workaround because gcc-3.3 does not
 	    # #define __VEC__ with -maltivec.
@@ -338,6 +353,7 @@ esac
 
 AC_SUBST(SSE2_CFLAGS)
 AC_SUBST(AVX_CFLAGS)
+AC_SUBST(AVX2_CFLAGS)
 AC_SUBST(ALTIVEC_CFLAGS)
 AC_SUBST(VSX_CFLAGS)
 AC_SUBST(NEON_CFLAGS)
@@ -608,6 +624,8 @@ AC_CONFIG_FILES([
    dft/simd/sse2/Makefile
    dft/simd/avx/Makefile
    dft/simd/avx-128/Makefile
+   dft/simd/avx2/Makefile
+   dft/simd/avx2-128/Makefile
    dft/simd/altivec/Makefile
    dft/simd/vsx/Makefile
    dft/simd/neon/Makefile
@@ -622,6 +640,8 @@ AC_CONFIG_FILES([
    rdft/simd/sse2/Makefile
    rdft/simd/avx/Makefile
    rdft/simd/avx-128/Makefile
+   rdft/simd/avx2/Makefile
+   rdft/simd/avx2-128/Makefile
    rdft/simd/altivec/Makefile
    rdft/simd/vsx/Makefile
    rdft/simd/neon/Makefile
