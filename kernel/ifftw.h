@@ -98,7 +98,7 @@ extern void X(extract_reim)(int sign, R *c, R **r, R **i);
 
 /* define HAVE_SIMD if any simd extensions are supported */
 #if defined(HAVE_SSE) || defined(HAVE_SSE2) || defined(HAVE_ALTIVEC) || \
-     defined(HAVE_MIPS_PS) || defined(HAVE_AVX)
+  defined(HAVE_VSX) || defined(HAVE_MIPS_PS) || defined(HAVE_AVX)
 #define HAVE_SIMD 1
 #else
 #define HAVE_SIMD 0
@@ -107,6 +107,7 @@ extern void X(extract_reim)(int sign, R *c, R **r, R **i);
 extern int X(have_simd_sse2)(void);
 extern int X(have_simd_avx)(void);
 extern int X(have_simd_altivec)(void);
+extern int X(have_simd_vsx)(void);
 extern int X(have_simd_neon)(void);
 
 /* forward declarations */
